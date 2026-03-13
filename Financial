@@ -1,0 +1,403 @@
+import React, { useState } from 'react';
+import { 
+  Home, Plus, X, 
+  ArrowRightLeft, Wallet, CreditCard, Target, Calendar, 
+  PlusCircle, Edit3, ArrowUpCircle, ArrowDownCircle, UserPlus, Phone, Flag
+} from 'lucide-react';
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState('Transaction');
+
+  // --- Transaction Form States ---
+  const [type, setType] = useState('expense'); 
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [category, setCategory] = useState('');
+  
+  // --- Budget Form States ---
+  const [budgetAmount, setBudgetAmount] = useState('');
+  const [budgetCategory, setBudgetCategory] = useState('');
+
+  // --- Installment Form States ---
+  const [loanName, setLoanName] = useState('');
+  const [insAmount, setInsAmount] = useState('');
+  const [percentage, setPercentage] = useState('');
+  const [duration, setDuration] = useState('');
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [advance, setAdvance] = useState('');
+
+  // --- Debit / Credit Form States ---
+  const [dcName, setDcName] = useState('');
+  const [dcMobile, setDcMobile] = useState('');
+  const [dcAmount, setDcAmount] = useState('');
+  const [dcType, setDcType] = useState('debit'); 
+  const [dcDate, setDcDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // --- Goals Form States ---
+  const [goalName, setGoalName] = useState('');
+  const [goalTarget, setGoalTarget] = useState('');
+  const [goalMonthly, setGoalMonthly] = useState('');
+  const [goalStart, setGoalStart] = useState(new Date().toISOString().split('T')[0]);
+
+  // --- Categories State ---
+  const [expenseCategories, setExpenseCategories] = useState(['Food', 'Shopping', 'Rent', 'Bills', 'Travel']);
+  const [incomeCategories, setIncomeCategories] = useState(['Salary', 'Freelance', 'Investment', 'Gift']);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+
+  // --- Calculations for Installment ---
+  const principal = parseFloat(insAmount) || 0;
+  const pct = parseFloat(percentage) || 0;
+  const months = parseInt(duration) || 1;
+  const adv = parseFloat(advance) || 0;
+
+  const pctAmount = (principal * pct) / 100;
+  const totalWithInterest = principal + pctAmount;
+  const remainingBalance = totalWithInterest - adv;
+  const monthlyKist = months > 0 ? remainingBalance / months : 0;
+
+  const calculateDate = (baseDate, monthsToAdd) => {
+    if (!baseDate || isNaN(monthsToAdd) || monthsToAdd <= 0) return "N/A";
+    const d = new Date(baseDate);
+    d.setMonth(d.getMonth() + Math.ceil(monthsToAdd));
+    return d.toISOString().split('T')[0];
+  };
+
+  // --- Calculations for Goals ---
+  const gTarget = parseFloat(goalTarget) || 0;
+  const gMonthly = parseFloat(goalMonthly) || 0;
+  const monthsToGoal = gMonthly > 0 ? gTarget / gMonthly : 0;
+  const goalCompletionDate = calculateDate(goalStart, monthsToGoal);
+
+  const menuItems = [
+    { id: 0, icon: <Home size={24} />, label: 'Home' },
+    { id: 1, icon: <ArrowRightLeft size={24} />, label: 'Transaction' },
+    { id: 2, icon: <Plus size={28} />, label: 'Create', isSpecial: true },
+    { id: 3, icon: <Wallet size={24} />, label: 'Budget' },
+    { id: 4, icon: <CreditCard size={24} />, label: 'Debit/Credit' },
+  ];
+
+  const modalTabs = [
+    { id: 'Transaction', icon: <ArrowRightLeft size={18} />, label: 'Transaction' },
+    { id: 'Budget', icon: <Wallet size={18} />, label: 'Budget' },
+    { id: 'Installment', icon: <Calendar size={18} />, label: 'Installment' },
+    { id: 'DebitCredit', icon: <CreditCard size={18} />, label: 'Debit/Credit' },
+    { id: 'Goals', icon: <Target size={18} />, label: 'Goals' },
+  ];
+
+  const handleAddNewCategory = () => {
+    if (!newCategoryName.trim()) return;
+    if (type === 'expense') setExpenseCategories([...expenseCategories, newCategoryName]);
+    else setIncomeCategories([...incomeCategories, newCategoryName]);
+    setNewCategoryName('');
+    setIsAddingCategory(false);
+  };
+
+  const handleMenuClick = (item) => {
+    if (item.isSpecial) setIsModalOpen(true);
+    else setActiveTab(item.id);
+  };
+
+  const currentCategories = type === 'expense' ? expenseCategories : incomeCategories;
+
+  // Reusable sleek button component style
+  const sleekBtnClass = "w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold py-3.5 rounded-2xl shadow-lg shadow-cyan-500/20 transition-all active:scale-[0.97] hover:brightness-110 uppercase tracking-wider text-xs";
+
+  return (
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-white font-sans overflow-hidden select-none">
+      {/* Background Glows */}
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-900/20 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/20 blur-[120px] rounded-full pointer-events-none"></div>
+
+      {/* Dashboard Summary */}
+      <div className="text-center mb-20 animate-fade-in relative z-10 w-full max-w-md">
+        <h1 className="text-3xl font-black bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent mb-6 tracking-tight">
+          FINTRACK PRO
+        </h1>
+        <div className="space-y-4">
+          <div className="p-8 bg-slate-900/40 rounded-[35px] border border-white/5 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 transition-opacity">
+                <Wallet size={80} />
+            </div>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Available Balance</p>
+            <h2 className="text-4xl font-black text-white tracking-tight">PKR 12,450</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-slate-900/40 rounded-3xl border border-white/5 flex flex-col items-center backdrop-blur-sm">
+               <ArrowDownCircle className="text-emerald-400 mb-1" size={20} />
+               <span className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Income</span>
+               <span className="font-bold text-emerald-400">PKR 4,200</span>
+            </div>
+            <div className="p-4 bg-slate-900/40 rounded-3xl border border-white/5 flex flex-col items-center backdrop-blur-sm">
+               <ArrowUpCircle className="text-rose-400 mb-1" size={20} />
+               <span className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Expense</span>
+               <span className="font-bold text-rose-400">PKR 1,850</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Bottom Nav */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-40">
+        <div className="relative bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-[35px] p-2 shadow-2xl flex items-center justify-between">
+          {menuItems.map((item) => (
+            <button key={item.id} onClick={() => handleMenuClick(item)} className={`relative z-10 flex flex-col items-center justify-center w-full py-2 transition-all duration-300 ${activeTab === item.id ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-400'}`}>
+              {item.isSpecial ? (
+                <div className="-mt-14 p-4 rounded-full shadow-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white transform active:scale-95 transition-transform border-4 border-slate-950">
+                  {item.icon}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <div className={`transition-all duration-300 ${activeTab === item.id ? '-translate-y-1 scale-110' : ''}`}>{item.icon}</div>
+                  <span className={`text-[9px] font-bold tracking-tight transition-all duration-300 ${activeTab === item.id ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>{item.label}</span>
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Master Control Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsModalOpen(false)}></div>
+          
+          <div className="relative w-full max-w-lg bg-slate-900 border-t sm:border border-white/10 rounded-t-[40px] sm:rounded-[40px] shadow-2xl flex flex-col transition-all duration-500 ease-in-out animate-slide-up overflow-hidden" style={{ maxHeight: '85vh' }}>
+            
+            <div className="p-6 pb-2 shrink-0">
+              <div className="flex justify-between items-center mb-6 px-2">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                    <Edit3 size={16} className="text-cyan-400" />
+                  </div>
+                  Master Control
+                </h2>
+                <button onClick={() => setIsModalOpen(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors"><X size={20} /></button>
+              </div>
+
+              {/* Animated Top Tabs for Modal */}
+              <div className="relative flex items-center gap-1 overflow-x-auto pb-4 no-scrollbar px-2 shrink-0">
+                {modalTabs.map((tab) => (
+                  <button key={tab.id} onClick={() => { setActiveModalTab(tab.id); setIsAddingCategory(false); }} className={`relative flex flex-col items-center min-w-[90px] px-2 py-3 rounded-2xl transition-all duration-300 ${activeModalTab === tab.id ? 'text-cyan-400 translate-y-[-2px]' : 'text-slate-500 hover:text-slate-400'}`}>
+                    <div className={`mb-1 transition-transform duration-300 ${activeModalTab === tab.id ? 'scale-110' : ''}`}>{tab.icon}</div>
+                    <span className={`text-[10px] font-bold transition-all duration-300 whitespace-nowrap ${activeModalTab === tab.id ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>{tab.label}</span>
+                    {activeModalTab === tab.id && <div className="absolute bottom-1 w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_8px_cyan]"></div>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="overflow-y-auto p-6 pt-2 bg-slate-950/30">
+              
+              {/* TRANSACTION TAB */}
+              {activeModalTab === 'Transaction' && (
+                <div className="space-y-6 animate-slide-up duration-500">
+                  <div className="flex p-1 bg-slate-900 rounded-2xl border border-white/5">
+                    <button onClick={() => setType('expense')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${type === 'expense' ? 'bg-rose-500 text-white' : 'text-slate-500'}`}>Expense</button>
+                    <button onClick={() => setType('income')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${type === 'income' ? 'bg-emerald-500 text-white' : 'text-slate-500'}`}>Income</button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-cyan-500/30 transition-colors">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Amount</label>
+                        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="PKR" className="bg-transparent text-lg font-bold w-full outline-none text-white" />
+                      </div>
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-cyan-500/30 transition-colors">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Date</label>
+                        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="bg-transparent text-xs font-medium w-full outline-none text-white [color-scheme:dark]" />
+                      </div>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-cyan-500/30 transition-colors">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Description</label>
+                      <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Notes..." className="bg-transparent text-sm font-medium w-full outline-none text-white" />
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-cyan-500/30 transition-colors">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Category</label>
+                        <select value={category} onChange={(e) => setCategory(e.target.value)} className="bg-transparent w-full outline-none text-sm font-bold text-white appearance-none cursor-pointer">
+                          <option value="" disabled className="bg-slate-900">Select Category...</option>
+                          {currentCategories.map(cat => <option key={cat} value={cat} className="bg-slate-900">{cat}</option>)}
+                        </select>
+                      </div>
+
+                      <div className="px-2">
+                        {!isAddingCategory ? (
+                          <button onClick={() => setIsAddingCategory(true)} className="flex items-center gap-2 text-[11px] font-bold text-cyan-400 hover:text-cyan-300 transition-colors">
+                            <PlusCircle size={14} /> Add New Category
+                          </button>
+                        ) : (
+                          <div className="flex gap-2 items-center">
+                            <input autoFocus type="text" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="New Name..." className="flex-1 bg-white/5 border border-cyan-500/30 rounded-xl px-3 py-2 text-xs outline-none text-white focus:border-cyan-400 transition-colors" />
+                            <button onClick={handleAddNewCategory} className="px-4 py-2 bg-cyan-500 text-slate-950 rounded-xl text-xs font-bold active:scale-95">Add</button>
+                            <button onClick={() => setIsAddingCategory(false)} className="p-1 text-slate-500"><X size={18} /></button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <button className={sleekBtnClass}>Save Transaction</button>
+                </div>
+              )}
+
+              {/* BUDGET TAB */}
+              {activeModalTab === 'Budget' && (
+                <div className="space-y-6 animate-slide-up duration-500">
+                  <div className="space-y-4">
+                    <div className="p-4 bg-white/5 rounded-3xl border border-white/5">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Select Category</label>
+                      <select value={budgetCategory} onChange={(e) => setBudgetCategory(e.target.value)} className="bg-transparent w-full outline-none text-sm font-bold text-white appearance-none">
+                        <option value="" disabled className="bg-slate-900">Choose Category...</option>
+                        {expenseCategories.map(cat => <option key={cat} value={cat} className="bg-slate-900">{cat}</option>)}
+                      </select>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-3xl border border-white/5">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Monthly Budget (PKR)</label>
+                      <input type="number" value={budgetAmount} onChange={(e) => setBudgetAmount(e.target.value)} placeholder="Limit" className="bg-transparent text-lg font-bold w-full outline-none text-white" />
+                    </div>
+                  </div>
+                  <button className={`${sleekBtnClass} from-emerald-500 to-teal-600 shadow-emerald-500/20`}>Set Budget</button>
+                </div>
+              )}
+
+              {/* INSTALLMENT TAB */}
+              {activeModalTab === 'Installment' && (
+                <div className="space-y-5 animate-slide-up duration-500 pb-4">
+                  <div className="p-5 bg-indigo-500/10 border border-indigo-500/30 rounded-3xl grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Monthly Kist</p>
+                      <h4 className="text-lg font-black text-indigo-400">PKR {monthlyKist.toLocaleString(undefined, {maximumFractionDigits: 0})}</h4>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Expiry</p>
+                      <h4 className="text-xs font-bold text-white">{calculateDate(startDate, months)}</h4>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-white/5 rounded-3xl border border-white/5">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Item Name</label>
+                      <input type="text" value={loanName} onChange={(e) => setLoanName(e.target.value)} placeholder="e.g. Car Loan" className="bg-transparent text-sm font-medium w-full outline-none text-white" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-indigo-500/30 transition-colors">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Price</label>
+                        <input type="number" value={insAmount} onChange={(e) => setInsAmount(e.target.value)} placeholder="0" className="bg-transparent text-lg font-bold w-full outline-none text-white" />
+                      </div>
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-indigo-500/30 transition-colors">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Interest %</label>
+                        <input type="number" value={percentage} onChange={(e) => setPercentage(e.target.value)} placeholder="0" className="bg-transparent text-lg font-bold w-full outline-none text-white" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-indigo-500/30 transition-colors">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Duration</label>
+                        <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Months" className="bg-transparent text-lg font-bold w-full outline-none text-white" />
+                      </div>
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-indigo-500/30 transition-colors">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Advance</label>
+                        <input type="number" value={advance} onChange={(e) => setAdvance(e.target.value)} placeholder="Paid" className="bg-transparent text-lg font-bold w-full outline-none text-white" />
+                      </div>
+                    </div>
+                  </div>
+                  <button className={`${sleekBtnClass} from-indigo-500 to-purple-600 shadow-indigo-500/20`}>Register Installment</button>
+                </div>
+              )}
+
+              {/* DEBIT / CREDIT TAB */}
+              {activeModalTab === 'DebitCredit' && (
+                <div className="space-y-6 animate-slide-up duration-500 pb-4">
+                  <div className="flex p-1 bg-slate-900 rounded-2xl border border-white/5">
+                    <button onClick={() => setDcType('debit')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${dcType === 'debit' ? 'bg-orange-500 text-white shadow-lg' : 'text-slate-500'}`}>Lena Hai</button>
+                    <button onClick={() => setDcType('credit')} className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${dcType === 'credit' ? 'bg-blue-500 text-white shadow-lg' : 'text-slate-500'}`}>Dena Hai</button>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Full Name</label>
+                        <input type="text" value={dcName} onChange={(e) => setDcName(e.target.value)} placeholder="User Name" className="bg-transparent text-sm font-bold w-full outline-none text-white" />
+                      </div>
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Mobile No</label>
+                        <input type="tel" value={dcMobile} onChange={(e) => setDcMobile(e.target.value)} placeholder="03xx..." className="bg-transparent text-sm font-bold w-full outline-none text-white" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Amount</label>
+                        <input type="number" value={dcAmount} onChange={(e) => setDcAmount(e.target.value)} placeholder="PKR" className="bg-transparent text-lg font-bold w-full outline-none text-white" />
+                      </div>
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Date</label>
+                        <input type="date" value={dcDate} onChange={(e) => setDcDate(e.target.value)} className="bg-transparent text-xs font-bold w-full outline-none text-white [color-scheme:dark]" />
+                      </div>
+                    </div>
+                  </div>
+                  <button className={`${sleekBtnClass} from-amber-500 to-orange-600 shadow-amber-500/20`}>Create Entry</button>
+                </div>
+              )}
+
+              {/* GOALS TAB */}
+              {activeModalTab === 'Goals' && (
+                <div className="space-y-6 animate-slide-up duration-500 pb-4">
+                  <div className="p-6 bg-cyan-500/10 border border-cyan-500/30 rounded-[35px] relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-4 opacity-5"><Flag size={60} /></div>
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                          <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Target Achievement</p>
+                          <h4 className="text-xl font-black text-cyan-400">{goalCompletionDate !== "N/A" ? goalCompletionDate : "Pending Data"}</h4>
+                      </div>
+                      <div className="text-right">
+                          <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Duration</p>
+                          <h4 className="text-sm font-bold text-white">{monthsToGoal > 0 ? `${monthsToGoal.toFixed(1)} Months` : "0 Months"}</h4>
+                      </div>
+                    </div>
+                    <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 w-[30%] animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-cyan-500/30 transition-colors">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Goal Name</label>
+                      <input type="text" value={goalName} onChange={(e) => setGoalName(e.target.value)} placeholder="e.g. New Car, House" className="bg-transparent text-sm font-bold w-full outline-none text-white" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-cyan-500/30 transition-colors">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Target Amount</label>
+                        <input type="number" value={goalTarget} onChange={(e) => setGoalTarget(e.target.value)} placeholder="PKR" className="bg-transparent text-lg font-bold w-full outline-none text-white" />
+                      </div>
+                      <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-cyan-500/30 transition-colors">
+                        <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Save Monthly</label>
+                        <input type="number" value={goalMonthly} onChange={(e) => setGoalMonthly(e.target.value)} placeholder="PKR" className="bg-transparent text-lg font-bold w-full outline-none text-white" />
+                      </div>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-3xl border border-white/5 focus-within:border-cyan-500/30 transition-colors">
+                      <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 block">Start Date</label>
+                      <input type="date" value={goalStart} onChange={(e) => setGoalStart(e.target.value)} className="bg-transparent text-xs font-bold w-full outline-none text-white [color-scheme:dark]" />
+                    </div>
+                  </div>
+                  <button className={sleekBtnClass}>Start Saving Goal</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .animate-fade-in { animation: fade-in 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-slide-up { animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        button, select, input { -webkit-tap-highlight-color: transparent; border: none; }
+      `}} />
+    </div>
+  );
+};
+
+export default App;
+
